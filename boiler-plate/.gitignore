@@ -1,0 +1,19 @@
+# Directories
+#------------
+/.idea/
+/.phpunit/
+/cache/
+/logs/
+/nbproject/
+/node_modules/
+/vendor/
+/web-ui/css/
+/web-ui/js/
+/web-ui/images/
+
+# Files
+#------
+/composer.lock
+/config/settings.php
+/npm-debug.log
+/web-ui/info.php
