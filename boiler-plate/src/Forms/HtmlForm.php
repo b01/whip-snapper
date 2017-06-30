@@ -33,6 +33,13 @@ abstract class HtmlForm implements Form
     }
 
     /**
+     * Get error message to display to the client.
+     *
+     * @return array
+     */
+    abstract protected function getMessages();
+
+    /**
      * @inheritdoc
      */
     public function getRenderData() : array
