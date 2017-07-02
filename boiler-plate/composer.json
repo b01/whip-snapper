@@ -6,7 +6,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "${namespace}\\Tests\\": "tests/BW"
+            "${namespace}\\Test\\": "test"
         }
     },
     "name": "${projectName}",
