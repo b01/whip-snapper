@@ -1,4 +1,4 @@
-<?php namespace {{ namespace }}\Forms;
+<?php namespace ${namespace}\Forms;
 
 use Kshabazz\Slib\Tools\Utilities;
 use Whip\Form;

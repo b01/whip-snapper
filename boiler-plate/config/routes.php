@@ -6,7 +6,7 @@ use Psr\Http\Message\ServerRequestInterface;
 const REDIRECT_DEFAULT = '/';
 
 $app->any('/', function () {
-    $view = new \BW\Views\Login($this->renderer);
+    $view = new ${namespace}\Views\Login($this->renderer);
 
     return $this->htmlController
         ->addForm($this->formLogin)
@@ -14,7 +14,7 @@ $app->any('/', function () {
 });
 
 $app->any('/add-account.html', function () {
-    $view = new \BW\Views\AddAccount($this->renderer);
+    $view = new ${namespace}\Views\AddAccount($this->renderer);
 
     return $this->htmlController
         ->addForm($this->formAccountAdd)
@@ -22,7 +22,7 @@ $app->any('/add-account.html', function () {
 });
 
 $app->any('/edit-account.html', function () {
-    $view = new \BW\Views\EditAccount($this->renderer);
+    $view = new ${namespace}\Views\EditAccount($this->renderer);
 
     $this->htmlController->requiresLoginFrom(REDIRECT_DEFAULT);
 
@@ -32,7 +32,7 @@ $app->any('/edit-account.html', function () {
 });
 
 $app->get('/edit-work.html', function () {
-    $view = new \BW\Views\EditWork($this->renderer);
+    $view = new ${namespace}\Views\EditWork($this->renderer);
 
     $this->htmlController->requiresLoginFrom(REDIRECT_DEFAULT);
 
@@ -42,7 +42,7 @@ $app->get('/edit-work.html', function () {
 });
 
 $app->any('/start.html', function () {
-    $view = new \BW\Views\Start($this->renderer);
+    $view = new ${namespace}\Views\Start($this->renderer);
 
     return $this->htmlController
         ->addForm($this->formLogin)

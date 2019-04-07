@@ -1,65 +1,81 @@
-<?php namespace BW;
+<?php namespace ${namespace};
 /**
  * Dependency injection container configuration
  */
 
-use Monolog\Logger;
-use Monolog\Processor\UidProcessor;
-use Monolog\Handler\StreamHandler;
+use Interop\Container\ContainerInterface;
 use Slim\Container;
 
+const IS_PROD = false;
 
 $settings = require __DIR__ . '/../config/settings.php';
 $container = new Container($settings);
+unset($settings);
 
 /**
- * File upload handler
+ * Form storage.
  *
  * @param \Interop\Container\ContainerInterface $c
- * @return \Sirius\Upload\Handler
+ * @return \Whip\FormFactory
  */
-$container['fileUpload'] = function ($c) {
-    $uploadHandler = new \Sirius\Upload\Handler($c->get('settings')['imageDir']);
+$container['formFactory'] = function (ContainerInterface $c) {
+    $validator = new \Whip\Lash\Validation();
+    $books = $c->get('books');
+    $session = $c->get('session');
+    $formFactory = new \Whip\FormFactory();
 
-    // validation rules
-    $uploadHandler->addRule(
-        'extension',
-        ['allowed' => ['jpg', 'png']],
-        '{label} should be a valid image (jpg, png)',
-        'Book Cover'
+
+    $formFactory->set(
+        ${namespace}\Forms\Login::class,
+        function () use ($books, $validator, $session) {
+            $login = new ${namespace}\Forms\Login(
+                $validator,
+                $books
+            );
+
+            $login->withSession($session);
+
+            return $login;
+        }
     );
 
-    $uploadHandler->addRule('size', ['max' => '1M'], '{label} should have less than {max}', 'Book Cover');
-
-    $uploadHandler->setSanitizerCallback(function ($name) {
-        return \preg_replace('/[^a-zA-Z0-9._\-]+/', '_', $name);
-    });
-
-    return $uploadHandler;
+    return $formFactory;
 };
 
 /**
  * Handles processing of forms.
  *
  * @param \Interop\Container\ContainerInterface $c
- * @return \${namespace}\Forms\FormHandler
+ * @return ${namespace}\Forms\FormHandler
  */
 $container['formService'] = function ($c) {
-    return new \${namespace}\Forms\FormHandler('formName');
+    $formController =  new ${namespace}\Forms\FormHandler(
+        $c->get('request'),
+        $c->get('response'),
+        'formName',
+        $c->get('formFactory'),
+        $c->get('session')
+    );
+
+    return $formController;
 };
 
 /**
  * Respond to HTML page request.
  *
  * @param \Interop\Container\ContainerInterface $c
- * @return \${namespace}\Controllers\Html
+ * @return ${namespace}\Controllers\Html
  */
 $container['htmlController'] = function ($c) {
-    return new \${namespace}\Controllers\Html(
+    $htmlController= new ${namespace}\Controllers\Html(
         $c->get('request'),
         $c->get('response'),
         $c->get('formService')
     );
+
+    $htmlController->withSession($c->get('session'));
+
+    return $htmlController;
 };
 
 /**
@@ -70,10 +86,10 @@ $container['htmlController'] = function ($c) {
  */
 $container['logger'] = function ($c) {
     $settings = $c->get('settings')['logger'];
-    $logger = new Logger($settings['name']);
+    $logger = new \Monolog\LoggerLogger($settings['name']);
 
-    $logger->pushProcessor(new UidProcessor());
-    $logger->pushHandler(new StreamHandler($settings['path'], $settings['level']));
+    $logger->pushProcessor(new \Monolog\Processor\UidProcessor());
+    $logger->pushHandler(new \Monolog\Handler\StreamHandler($settings['path'], $settings['level']));
 
     return $logger;
 };
@@ -99,9 +115,65 @@ $container['renderer'] = function ($c) {
 
     $renderer = new \Whip\TwigRenderer($twig);
 
-    $renderer->addData(['imageDir' => '/images']);
+    $renderer->addData([
+        'imageDir' => '/images',
+        'min' => IS_PROD ? '.min' : '',
+    ]);
 
     return $renderer;
+};
+
+/**
+ * Get session handler.
+ *
+ * @return ${namespace}\WorkSession
+ */
+$container['session'] = function () {
+    return new ${namespace}\WorkSession();
+};
+
+/**
+ * Returns a validator.
+ *
+ * @return \Whip\Lash\Validation
+ */
+$container['validator'] = function () {
+    return new \Whip\Lash\Validation();
+};
+
+/**
+ * Get works for an account.
+ *
+ * @param \Interop\Container\ContainerInterface $c
+ * @return array
+ */
+$container['work'] = function (ContainerInterface $c) {
+    $db = $c->get('books');
+    $workId = \filter_input(
+        INPUT_GET,
+        'workId',
+        FILTER_SANITIZE_STRING,
+        ['flags' => FILTER_SANITIZE_URL]
+    );
+
+    if (!empty($workId)) {
+        $session = $c->get('session');
+        $session->setCurrentWork($workId);
+    }
+
+    return $db->getWork($workId);
+};
+
+/**
+ * Get works for an account.
+ *
+ * @param \Interop\Container\ContainerInterface $c
+ * @return array
+ */
+$container['works'] = function (ContainerInterface $c) {
+    $db = $c->get('books');
+
+    return $db->getWorks();
 };
 
 return $container;
